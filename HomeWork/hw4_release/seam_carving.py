@@ -20,7 +20,10 @@ def energy_function(image):
     out = np.zeros((H, W))
 
     ### YOUR CODE HERE
-    pass
+    out = (image[:,:,0] + image[:,:,1] + image[:,:,2]) / 3 
+    x_gradient = np.abs(np.gradient(out, axis=1))
+    y_gradient = np.abs(np.gradient(out, axis=0))
+    out = x_gradient + y_gradient
     ### END YOUR CODE
 
     return out
@@ -62,7 +65,17 @@ def compute_cost(image, energy, axis=1):
     paths[0] = 0  # we don't care about the first row of paths
 
     ### YOUR CODE HERE
-    pass
+    for h in range(1, H):
+        for w in range(W):
+            if w == 0:
+                cost[h,w] = energy[h,w] + min(cost[h-1, w:w+2])
+                paths[h,w] = np.argmin(cost[h-1, w:w+2], axis=0)
+            elif w == W:
+                cost[h,w] = energy[h,w] + min(cost[h-1, w-1:w+1])
+                paths[h,w] = np.argmin(cost[h-1, w-1:w+1], axis=0) - 1
+            else:
+                cost[h,w] = energy[h,w] + min(cost[h-1, w-1:w+2])
+                paths[h,w] = np.argmin(cost[h-1, w-1:w+2], axis=0) - 1
     ### END YOUR CODE
 
     if axis == 0:
@@ -99,7 +112,8 @@ def backtrack_seam(paths, end):
     seam[H-1] = end
 
     ### YOUR CODE HERE
-    pass
+    for i in range(H-2, -1, -1):
+        seam[i] = seam[i+1] + paths[i+1, seam[i+1]]
     ### END YOUR CODE
 
     # Check that seam only contains values in [0, W-1]
@@ -128,7 +142,7 @@ def remove_seam(image, seam):
     out = None
     H, W, C = image.shape
     ### YOUR CODE HERE
-    pass
+    out = image[np.arange(W) != seam[:, None]].reshape(H, W-1, C)
     ### END YOUR CODE
     out = np.squeeze(out)  # remove last dimension if C == 1
 
@@ -169,7 +183,12 @@ def reduce(image, size, axis=1, efunc=energy_function, cfunc=compute_cost):
     assert size > 0, "Size must be greater than zero"
 
     ### YOUR CODE HERE
-    pass
+    while out.shape[1] > size:
+        energy = efunc(out)
+        cost, paths = cfunc(out, energy)
+        end = np.argmin(cost[-1]) 
+        seam = backtrack_seam(paths, end)
+        out = remove_seam(out, seam)
     ### END YOUR CODE
 
     assert out.shape[1] == size, "Output doesn't have the right shape"
