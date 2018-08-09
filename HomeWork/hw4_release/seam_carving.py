@@ -65,6 +65,7 @@ def compute_cost(image, energy, axis=1):
     paths[0] = 0  # we don't care about the first row of paths
 
     ### YOUR CODE HERE
+    # too slow
     for h in range(1, H):
         for w in range(W):
             if w == 0:
@@ -215,7 +216,9 @@ def duplicate_seam(image, seam):
     H, W, C = image.shape
     out = np.zeros((H, W + 1, C))
     ### YOUR CODE HERE
-    pass
+    # 在原来的seam位置插入一个新值，值为原位置的值
+    for i in range(H):
+        out[i] = np.insert(image[i], seam[i], image[i, seam[i]], axis=0)
     ### END YOUR CODE
 
     return out
@@ -253,7 +256,12 @@ def enlarge_naive(image, size, axis=1, efunc=energy_function, cfunc=compute_cost
     assert size > W, "size must be greather than %d" % W
 
     ### YOUR CODE HERE
-    pass
+    while out.shape[1] < size:
+        e = efunc(out)
+        cost, paths = cfunc(out, e)
+        end = np.argmin(cost[-1]) 
+        seam = backtrack_seam(paths, end)
+        out = duplicate_seam(out, seam)
     ### END YOUR CODE
 
     if axis == 0:
@@ -371,7 +379,11 @@ def enlarge(image, size, axis=1, efunc=energy_function, cfunc=compute_cost):
     assert size <= 2 * W, "size must be smaller than %d" % (2 * W)
 
     ### YOUR CODE HERE
-    pass
+    seams = find_seams(out, size - W)
+    seams = np.expand_dims(seams, axis=2)
+    for i in range(size - W):
+        out = duplicate_seam(out, np.where(seams == i+1)[1])
+        seams = duplicate_seam(seams, np.where(seams == i+1)[1])
     ### END YOUR CODE
 
     if axis == 0:
