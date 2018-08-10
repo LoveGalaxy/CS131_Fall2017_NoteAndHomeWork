@@ -33,10 +33,17 @@ def kmeans(features, k, num_iters=100):
     idxs = np.random.choice(N, size=k, replace=False)
     centers = features[idxs]
     assignments = np.zeros(N)
-
+    
     for n in range(num_iters):
         ### YOUR CODE HERE
-        pass
+        for i in range(N):
+            assignments[i] = np.argmin(np.sum((features[i] - centers) ** 2, axis=1))
+        last_centers = centers.copy()
+        for j in range(k):
+            centers[j] = np.mean(features[assignments == j], axis=0)
+        if np.allclose(last_centers, centers):
+            break
+            
         ### END YOUR CODE
 
     return assignments
